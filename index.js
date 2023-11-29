@@ -17,6 +17,10 @@ app.use(express.urlencoded({extended:true}))
 //     res.send("Hello world")
 // })
 
+app.get('/', (req, res) => {
+   res.send("Hello world")
+});
+
 
 app.listen(process.env.EXPRESS_PORT, function () {
     console.log('Server started!')
