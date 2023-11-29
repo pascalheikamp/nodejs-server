@@ -13,9 +13,9 @@ const app = express();
 app.use('/notes', noteRoutes)
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
-app.get('/', function (req, res) {
-    res.send("Hello world")
-})
+// app.get('/', function (req, res) {
+//     res.send("Hello world")
+// })
 
 
 app.listen(process.env.EXPRESS_PORT, function () {

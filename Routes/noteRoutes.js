@@ -3,6 +3,16 @@ import {Faker, faker} from "@faker-js/faker";
 import Product from "../models/Note.js";
 const routes = express.Router();
 
+// routes.patch('', (req, res) => {
+//     if(req.header?.host === 'videos.nl') {
+//         res.send()
+//     }else {
+//         res.status(400).json.body({
+//             "message": "This is not supported"
+//         })
+//     }
+// })
+
 routes.post('/seed', async (req, res) => {
     console.log("Seed DB");
 
