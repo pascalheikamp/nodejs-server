@@ -1,11 +1,14 @@
 import mongoose, {Schema} from "mongoose";
 
 const musicScheme = new mongoose.Schema({
-    id:Number,
-    title: String,
+    id: Number,
+    title: {
+        type: String,
+        unique: true
+    },
     releaseDate: Date,
-    duration:Number,
-    producer:String,
+    duration: Number,
+    producer: String,
     artist: String,
     genre: String,
 });
