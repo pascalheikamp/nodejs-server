@@ -4,7 +4,12 @@ import musicRoutes from "./routes/musicRoutes.js";
 import mongoose from 'mongoose'
 import 'dotenv/config'
 
-mongoose.connect(process.env.MONGODB_URL + process.env.MONGODB_PORT + '/' + process.env.MONGODB_NAME);
+try{
+    mongoose.connect(process.env.MONGODB_URL + process.env.MONGODB_PORT + '/' + process.env.MONGODB_NAME);
+} catch (error) {
+    console.log(error);
+}
+
 
 console.log('Connected to Mongo db');
 const app = express();
@@ -13,9 +18,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 app.use('/music', musicRoutes);
-// app.get('/', function (req, res) {
-//     res.send("Hello world")
-// })
 
 app.get('/', (req, res) => {
     res.send("Hello world")

@@ -4,22 +4,16 @@ import Music from "../models/Music.js";
 
 const routes = express.Router();
 
-// routes.patch('', (req, res) => {
-//     if(req.header?.host === 'videos.nl') {
-//         res.send()
-//     }else {
-//         res.status(400).json.body({
-//             "message": "This is not supported"
-//         })
-//     }
-// })
-
-//https://www.youtube.com/watch?v=9OfL9H6AmhQ
-
 routes.get('/', async (req, res) => {
     try {
-        let musics = await Music.find()
-        res.json(musics)
+        const {page = 1, limit = 10} = req.query
+        let music  =  await Music.find().limit(limit * 1).skip((page - 1) * limit).exec();
+        const count = await Music.countDocuments();
+        res.json({
+            items:  music,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+        });
     } catch (error) {
         res.status(500).send(error);
     }
@@ -29,7 +23,6 @@ routes.get('/:id', async (req, res) => {
     try {
         const {id} = req.params;
         const music = await Music.findById(id);
-        res.send(music)
     } catch (error) {
         res.status(500).send(error)
     }
@@ -102,5 +95,34 @@ routes.post('/seed', async (req, res) => {
         console.log("There was error because the method was not a seed method")
     }
 })
+
+function paginatedResult(model) {
+    return (req, res, next) => {
+        const page = parseInt(req.query.page);
+        const limit = parseInt(req.query.limit);
+
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
+
+        // let musics = await Music.find();
+
+        const results = {};
+        if (endIndex < model.length) {
+            results.next = {
+                page: page + 1,
+                limit: limit
+            }
+        }
+        if (startIndex > 0) {
+            results.previous = {
+                page: page - 1,
+                limit: limit
+            }
+        }
+        results.results = model.slice(startIndex, endIndex);
+        res.paginateResult = results;
+        next();
+    }
+}
 
 export default routes

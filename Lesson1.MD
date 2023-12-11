@@ -32,6 +32,23 @@ lijst van notities
 mongo db is een no sql database
 praten met database doe je met mongoose
 
+Cross origin: data overwisselen tussen backend applicatie en frontend
+pre flight: browser stuurt een options om te kijken of een bepaalde request mogelijk is
+access-control-allow-origin
+Hoe zorg ik dat andere browser er niet bij kunnen
+
+hash code verandert telkens als de paramters voor inloggen aangepast worden. De server gebruikt alleen het wachtwoord.
+*allow origin : iedereen kan er bij komen maar ze moeten wel inloggen
+
+application account krijgt gegevens van een derde partij zoals facebook, github, google etc
+server provider kan via http gevoelig informatie lekken
+https moet er een certificaat aangevraagd worden.
+public key encryption 
+private key
+
+promise .then is een callback functie.
+
+
 Een seeder maken in het project. 
 
 een seed functie maken wat gebruik gaat maken van een post
