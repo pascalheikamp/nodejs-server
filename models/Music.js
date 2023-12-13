@@ -4,13 +4,29 @@ const musicScheme = new mongoose.Schema({
     id: Number,
     title: {
         type: String,
-        unique: true
+        unique: true,
+        required:true
     },
-    releaseDate: Date,
-    duration: Number,
-    producer: String,
-    artist: String,
-    genre: String,
+    releaseDate:  {
+        type:String,
+        required:true
+    },
+    duration:  {
+        type:String,
+        required: true
+    },
+    producer: {
+        type:String,
+        required: true
+    },
+    artist: {
+        type:String,
+        required: true
+    },
+    genre: {
+        type:String,
+        required:true
+    },
 });
 
 // musicScheme.plugin(mongoosePaginate);

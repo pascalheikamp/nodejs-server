@@ -4,16 +4,66 @@ import Music from "../models/Music.js";
 
 const routes = express.Router();
 
+routes.options('/', (req, res) => {
+    // res.header('Access-Control-Allow-Origin', '*');
+    res.header('Allow', 'OPTIONS, GET, POST');
+    // res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(200).send();
+});
 routes.get('/', async (req, res) => {
     try {
-        const {page = 1, limit = 10} = req.query
-        let music  =  await Music.find().limit(limit * 1).skip((page - 1) * limit).exec();
-        const count = await Music.countDocuments();
-        res.json({
-            items:  music,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
+        const page = parseInt(req.query.page);
+        const limit = parseInt(req.query.limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
+        let music = await Music.find().limit(limit * 1).skip((page - 1) * limit).exec();
+
+        const paginationObj = {
+            _links: {
+                self: {
+                    href: "test"
+                },
+                collection: {
+                    href: "test"
+                }
+            }
+        };
+        const items = music.map((musicMap) => {
+            const item = musicMap.toJSON();
+            item._links = {
+                self: {href: `${req.protocol}://${req.get('host')}/music/${musicMap._id}`},
+                collection: {href: `${req.protocol}://${req.get('host')}/music/`}
+            }
+            return item
         });
+        const count = await Music.countDocuments();
+        const jsonData = {
+            items: items,
+            pagination: {
+                currentPage: page,
+                currentItems: 15,
+                totalPages: Math.ceil(count / limit),
+                _links: {
+                    first: {
+                        page: 1,
+                        href: "http://145.24.222.101:8000/music"
+                    },
+                    last: {
+                        page: limit,
+                        href: "http://145.24.222.101:8000/music"
+                    },
+                    previous: {
+                        page: (startIndex > 0 ? page - 1 : undefined),
+                        href: "http://145.24.222.101:8000/music"
+                    },
+                    next: {
+                        page: (endIndex < music.length ? page + 1 : ""),
+                        href: "http://145.24.222.101:8000/music"
+                    }
+                }
+            }
+        }
+        res.json(jsonData);
     } catch (error) {
         res.status(500).send(error);
     }
@@ -31,9 +81,13 @@ routes.get('/:id', async (req, res) => {
 routes.post('/musics/', async (req, res) => {
     try {
         const {title, releaseDate, duration, producer, artist, genre} = req.body;
-        const music = new Music({title, releaseDate, duration, producer, artist, genre});
-        await music.save();
-        res.status(201).send(req.body)
+        if (title, releaseDate, duration, producer, artist, genre) {
+            const music = new Music({title, releaseDate, duration, producer, artist, genre});
+            await music.save();
+            res.status(201).send(req.body)
+        } else {
+            res.status(500).send("some fields are empty")
+        }
     } catch (error) {
         res.status(500).send(error);
     }

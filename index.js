@@ -2,6 +2,7 @@ import express from 'express';
 import musicRoutes from "./routes/musicRoutes.js";
 //here import route
 import mongoose from 'mongoose'
+/*import cors from 'cors'*/
 import 'dotenv/config'
 
 try{
