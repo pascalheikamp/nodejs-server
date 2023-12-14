@@ -4,8 +4,9 @@ import musicRoutes from "./routes/musicRoutes.js";
 import mongoose from 'mongoose'
 /*import cors from 'cors'*/
 import 'dotenv/config'
+import bodyParser from "body-parser";
 
-try{
+try {
     mongoose.connect(process.env.MONGODB_URL + process.env.MONGODB_PORT + '/' + process.env.MONGODB_NAME);
 } catch (error) {
     console.log(error);
@@ -18,11 +19,28 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
-app.use('/music', musicRoutes);
 
-app.get('/', (req, res) => {
-    res.send("Hello world")
-});
+function checkUnsupportedFormat(req, res, next) {
+    const acceptedFormats = ['application/json'];
+
+    if (!req.headers.accept) {
+        req.negotiatedFormat = acceptedFormats[0];
+        return next();
+    }
+
+    const requestedFormats = req.headers.accept.split(',')
+    const supportedFormat = requestedFormats.find(format => acceptedFormats)
+
+    if (supportedFormat) {
+        req.negotiatedFormat = supportedFormat.trim();
+        return next()
+    } else {
+        return res.status(406).send('Not Acceptable');
+    }
+}
+
+app.use(checkUnsupportedFormat);
+app.use('/music', musicRoutes);
 
 
 app.listen(process.env.EXPRESS_PORT, function () {
