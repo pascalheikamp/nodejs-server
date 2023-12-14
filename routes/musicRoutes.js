@@ -95,14 +95,14 @@ routes.get('/:id', async (req, res) => {
 // })
 routes.post('/musics/', async (req, res) => {
     try {
-        const {title, releaseDate, duration, producer, artist, genre} = req.body;
-        if (title, releaseDate, duration, producer, artist, genre) {
-            const music = new Music({title, releaseDate, duration, producer, artist, genre});
-            await music.save();
-            res.status(201).send(req.body)
-        } else {
-            res.status(400).send("some fields are empty")
+        const formData = req.body;
+        if (!formData || !formData.title || !formData.releaseDate || !formData.duration || !formData.producer || !formData.artist || !formData.genre) {
+            return res.status(400).send('Invalid form data. Please provide title, releaseDate, duration, producer, artist and genre');
         }
+        const {title, releaseDate, duration, producer, artist, genre} = formData
+        const music = new Music({title, releaseDate, duration, producer, artist, genre});
+        await music.save();
+        res.status(201).send(req.body)
     } catch (error) {
         res.status(500).send(error);
     }

@@ -18,7 +18,7 @@ const app = express();
 
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({extended: false}))
 
 function checkUnsupportedFormat(req, res, next) {
     const acceptedFormats = ['application/json'];
@@ -40,6 +40,11 @@ function checkUnsupportedFormat(req, res, next) {
 }
 
 app.use(checkUnsupportedFormat);
+app.use((err, res, req, next) => {
+    if(err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+       return res.status(400).send('Invalid x-www-form-urlencoded data. Please check your request.');
+    }
+})
 app.use('/music', musicRoutes);
 
 
