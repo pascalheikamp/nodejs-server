@@ -6,15 +6,6 @@ const musicScheme = new mongoose.Schema({
         type: String,
         unique: true,
     },
-    releaseDate:  {
-        type:String,
-    },
-    duration:  {
-        type:String,
-    },
-    producer: {
-        type:String,
-    },
     artist: {
         type:String,
     },

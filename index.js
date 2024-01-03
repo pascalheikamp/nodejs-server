@@ -5,6 +5,7 @@ import mongoose from 'mongoose'
 /*import cors from 'cors'*/
 import 'dotenv/config'
 import bodyParser from "body-parser";
+import routes from "./routes/musicRoutes.js";
 
 try {
     mongoose.connect(process.env.MONGODB_URL + process.env.MONGODB_PORT + '/' + process.env.MONGODB_NAME);
@@ -15,10 +16,8 @@ try {
 
 console.log('Connected to Mongo db');
 const app = express();
-
-
 app.use(express.json());
-app.use(express.urlencoded({extended: false}))
+app.use(express.urlencoded({extended: true}));
 
 function checkUnsupportedFormat(req, res, next) {
     const acceptedFormats = ['application/json'];

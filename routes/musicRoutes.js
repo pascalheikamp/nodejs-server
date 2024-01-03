@@ -1,25 +1,38 @@
 import express from "express";
 import {Faker, faker} from "@faker-js/faker";
 import Music from "../models/Music.js";
-import bodyParser from "body-parser";
+
 
 const routes = express.Router();
 
 routes.options('/', (req, res) => {
     // res.header('Access-Control-Allow-Origin', '*');
     res.header('Allow', 'OPTIONS, GET, POST');
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    res.setHeader("Content-Type", "application/json");
     // res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.status(200).send();
 });
+
+routes.options('/:id', function (req, res, next) {
+    res.header('Allow', 'GET,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    res.sendStatus(200);
+});
+
 routes.get('/', async (req, res) => {
     try {
         const {negotiatedFormat} = req;
         if (negotiatedFormat === 'application/json') {
-            const page = parseInt(req.query.page);
+            const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit);
             const startIndex = (page - 1) * limit;
             const endIndex = page * limit;
-            let music = await Music.find().limit(limit * 1).skip((page - 1) * limit).exec();
+            let music = await Music.find().limit(limit).skip((page - 1) * limit).exec();
             const items = music.map((musicMap) => {
                 const item = musicMap.toJSON();
                 item._links = {
@@ -29,6 +42,13 @@ routes.get('/', async (req, res) => {
                 return item
             });
             const count = await Music.countDocuments();
+            const baseUrl = `${req.protocol}://${req.get('host')}/music/`;
+            const nextLink = `${baseUrl}?page=${page + 1}&limit=${limit}`;
+            const prevLink = `${baseUrl}?page=${page - 1}&limit=${limit}`;
+            let counter = 0;
+            for (let i = 0; i < music.length; ++i) {
+                counter++;
+            }
             const jsonData = {
                 items: items,
                 _links: {
@@ -41,8 +61,9 @@ routes.get('/', async (req, res) => {
                 },
                 pagination: {
                     currentPage: page,
-                    currentItems: 15,
+                    currentItems: counter,
                     totalPages: Math.ceil(count / limit),
+                    totalItems: count,
                     _links: {
                         first: {
                             page: 1,
@@ -53,12 +74,12 @@ routes.get('/', async (req, res) => {
                             href: "http://145.24.222.101:8000/music"
                         },
                         previous: {
-                            page: (startIndex > 0 ? page - 1 : undefined),
-                            href: "http://145.24.222.101:8000/music"
+                            page: (startIndex > 0 ? page - 1 : null),
+                            href: prevLink
                         },
                         next: {
-                            page: (endIndex < music.length ? page + 1 : ""),
-                            href: "http://145.24.222.101:8000/music"
+                            page: (endIndex < music.length ? page + 1 : null),
+                            href: nextLink
                         }
                     }
                 }
@@ -93,16 +114,25 @@ routes.get('/:id', async (req, res) => {
 //     limit: 10000,
 //     parameterLimit: 2
 // })
-routes.post('/musics/', async (req, res) => {
+routes.post('/', async (req, res) => {
+    console.log('method is post')
     try {
-        const formData = req.body;
-        if (!formData || !formData.title || !formData.releaseDate || !formData.duration || !formData.producer || !formData.artist || !formData.genre) {
-            return res.status(400).send('Invalid form data. Please provide title, releaseDate, duration, producer, artist and genre');
+        const contentType = req.header("Content-Type");
+        if (contentType === "application/json" || contentType === "application/x-www-form-urlencoded") {
+            console.log('content-type is correct')
+            const {title, artist, genre} = req.body || {};
+            if (!title || !artist || !genre) {
+                console.log('geen ingevoerde velden')
+                return res.status(400).send('Invalid form data. Please provide title, releaseDate, duration, producer, artist and genre');
+            }
+            console.log(title, artist, genre)
+            const music = new Music({title, artist, genre});
+            await music.save();
+            res.status(201).send(req.body)
+            console.log('succesvol')
+        } else {
+            res.status(400).send("Invalid request, check content-type")
         }
-        const {title, releaseDate, duration, producer, artist, genre} = formData
-        const music = new Music({title, releaseDate, duration, producer, artist, genre});
-        await music.save();
-        res.status(201).send(req.body)
     } catch (error) {
         res.status(500).send(error);
     }
@@ -111,8 +141,10 @@ routes.post('/musics/', async (req, res) => {
 routes.delete('/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        const music = await Music.findByIdAndDelete(id);
-        res.send(music);
+        await Music.findByIdAndDelete(id);
+        res.status(204).json({
+            message: 'Deleted resource'
+        })
 
     } catch (error) {
         res.status(500).send(error);
@@ -122,22 +154,24 @@ routes.delete('/:id', async (req, res) => {
 routes.put('/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        const {title, releaseDate, duration, producer, artist, genre} = req.body;
-        const music = await Music.findByIdAndUpdate(id, {
-            title,
-            releaseDate,
-            duration,
-            producer,
-            artist,
-            genre
-        }, {new: true});
-        res.send(music)
+        const {title, artist, genre} = req.body;
+        await Music.updateOne({_id: req.params.id}, {
+            title: title,
+            artist: artist,
+            genre: genre
+        });
+        let item = await Music.findOne({_id: req.params.id})
+        console.log(item)
+        res.status(200).json(item)
 
     } catch (error) {
         console.log(error)
-        res.status(500).send(error);
+        res.status(400).json({
+            message: 'Invalid format or incorrect id'
+        });
     }
 })
+
 
 routes.post('/seed', async (req, res) => {
     console.log("Seed DB");
