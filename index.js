@@ -2,7 +2,7 @@ import express from 'express';
 import musicRoutes from "./routes/musicRoutes.js";
 //here import route
 import mongoose from 'mongoose'
-/*import cors from 'cors'*/
+// import cors from 'cors'
 import 'dotenv/config'
 import bodyParser from "body-parser";
 import routes from "./routes/musicRoutes.js";
@@ -17,6 +17,7 @@ try {
 console.log('Connected to Mongo db');
 const app = express();
 app.use(express.json());
+// app.use(cors());
 app.use(express.urlencoded({extended: true}));
 
 function checkUnsupportedFormat(req, res, next) {

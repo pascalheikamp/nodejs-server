@@ -4,12 +4,15 @@ const musicScheme = new mongoose.Schema({
     id: Number,
     title: {
         type: String,
+        required:true,
         unique: true,
     },
     artist: {
+        required:true,
         type:String,
     },
     genre: {
+        required:true,
         type:String,
     },
 });

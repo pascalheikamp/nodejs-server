@@ -8,10 +8,10 @@ const routes = express.Router();
 routes.options('/', (req, res) => {
     // res.header('Access-Control-Allow-Origin', '*');
     res.header('Allow', 'OPTIONS, GET, POST');
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-    res.setHeader("Content-Type", "application/json");
+    res.header('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    // res.setHeader('Content-Type', 'application/json');
     // res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.status(200).send();
 });
@@ -24,8 +24,14 @@ routes.options('/:id', function (req, res, next) {
     res.sendStatus(200);
 });
 
+// routes.use('/' , async (req, res, next)=> {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+// })
 routes.get('/', async (req, res) => {
     try {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
         const {negotiatedFormat} = req;
         if (negotiatedFormat === 'application/json') {
             const page = parseInt(req.query.page) || 1;
@@ -95,8 +101,13 @@ routes.get('/', async (req, res) => {
 
 routes.get('/:id', async (req, res) => {
     try {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
         const {id} = req.params;
         const music = await Music.findById(id).exec();
+        if(!music) {
+            return res.status(404).json({message: "Music not found"})
+        }
 
         const item = music.toJSON();
         item._links = {
@@ -123,7 +134,7 @@ routes.post('/', async (req, res) => {
             const {title, artist, genre} = req.body || {};
             if (!title || !artist || !genre) {
                 console.log('geen ingevoerde velden')
-                return res.status(400).send('Invalid form data. Please provide title, releaseDate, duration, producer, artist and genre');
+                return res.status(400).send('Invalid form data. Please provide title, artist and genre');
             }
             console.log(title, artist, genre)
             const music = new Music({title, artist, genre});
@@ -141,28 +152,40 @@ routes.post('/', async (req, res) => {
 routes.delete('/:id', async (req, res) => {
     try {
         const {id} = req.params;
-        await Music.findByIdAndDelete(id);
-        res.status(204).json({
-            message: 'Deleted resource'
-        })
+        const music = await Music.findById(id);
+        if(!music) {
+            return res.status(404).json({message: "Music not found"})
+        }
+        await Music.deleteOne({_id: music._id})
+
+        return res.status(204).json({message: "Item is successfully deleted"});
 
     } catch (error) {
-        res.status(500).send(error);
+        console.error(error);
+        return res.status(500).json({message: "Internal Server Error"});
     }
 })
 
 routes.put('/:id', async (req, res) => {
     try {
         const {id} = req.params;
+        let music = await Music.findById(id);
         const {title, artist, genre} = req.body;
-        await Music.updateOne({_id: req.params.id}, {
-            title: title,
-            artist: artist,
-            genre: genre
-        });
-        let item = await Music.findOne({_id: req.params.id})
-        console.log(item)
-        res.status(200).json(item)
+
+        if (title && artist && genre) {
+            await Music.updateOne({_id: music._id}, {
+                title: title,
+                artist: artist,
+                genre: genre
+            });
+            res.status(200).send({message: "Item is successfully updated"});
+            return
+        } else {
+            res.status(400).send({message: "fields must be filled in"})
+        }
+
+        // console.log(item)
+        // res.status(200).json(item)
 
     } catch (error) {
         console.log(error)
